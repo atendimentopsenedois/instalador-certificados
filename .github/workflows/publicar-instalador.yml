@@ -1,0 +1,40 @@
+name: Publicar instalador de certificados
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'parts/**'
+      - '.github/workflows/publicar-instalador.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruir e validar instalador
+        shell: python
+        run: |
+          import base64, hashlib, pathlib
+          partes = sorted(pathlib.Path('parts').glob('part_*.b64'))
+          assert len(partes) == 16
+          saida = pathlib.Path('Instalador_Cadeias_Certificados.exe')
+          with saida.open('wb') as f:
+              for p in partes:
+                  f.write(base64.b64decode(p.read_text().strip(), validate=True))
+          esperado = 'b116511539a67ef9619bd03a7ee3b55b51583b4358d2c8071608558fcc6b689b'
+          atual = hashlib.sha256(saida.read_bytes()).hexdigest()
+          assert atual == esperado, f'{atual} != {esperado}'
+          pathlib.Path('SHA256_Instalador_Cadeias.txt').write_text(atual.upper() + '  ' + saida.name + '\n')
+      - name: Publicar release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release upload v1.0.0 Instalador_Cadeias_Certificados.exe SHA256_Instalador_Cadeias.txt --clobber
+          else
+            gh release create v1.0.0 Instalador_Cadeias_Certificados.exe SHA256_Instalador_Cadeias.txt --title 'Instalador de Cadeias de Certificados v1.0.0' --notes 'Windows 10/11 64 bits. Arquivo sem assinatura de editor e ainda nao testado em Windows real.' --latest
+          fi
