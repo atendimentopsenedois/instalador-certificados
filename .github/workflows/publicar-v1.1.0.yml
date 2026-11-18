@@ -1,0 +1,48 @@
+name: Publicar instalador v1.1.0
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publicar-v1.1.0.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar ferramentas
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y zstd
+      - name: Recuperar executavel original v1.0.0
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p base
+          gh release download v1.0.0 --pattern 'Instalador_Cadeias_Certificados.exe' --dir base
+          echo 'b116511539a67ef9619bd03a7ee3b55b51583b4358d2c8071608558fcc6b689b  base/Instalador_Cadeias_Certificados.exe' | sha256sum -c -
+      - name: Reconstruir v1.1.0 por patch validado
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat updates/v1.1.0/patch_part_*.b64 | tr -d '[:space:]' | base64 --decode > update-v1.1.0.zst
+          echo '8f435a253a02c4878dc84178a81c7793e4ba1744052e73cf4fb601d587e1e161  update-v1.1.0.zst' | sha256sum -c -
+          zstd --patch-from=base/Instalador_Cadeias_Certificados.exe --decompress update-v1.1.0.zst -o Instalador_Cadeias_Certificados_v1.1.exe --force
+          echo '8fbb0398e2e841d596e9626c0d8b6cd583dd0f5401b27a47080099e5fc8d006f  Instalador_Cadeias_Certificados_v1.1.exe' | sha256sum -c -
+          sha256sum Instalador_Cadeias_Certificados_v1.1.exe > SHA256_Instalador_Cadeias_v1.1.txt
+      - name: Publicar Release v1.1.0
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.1.0 >/dev/null 2>&1; then
+            gh release upload v1.1.0 Instalador_Cadeias_Certificados_v1.1.exe SHA256_Instalador_Cadeias_v1.1.txt --clobber
+            gh release edit v1.1.0 --latest
+          else
+            gh release create v1.1.0 Instalador_Cadeias_Certificados_v1.1.exe SHA256_Instalador_Cadeias_v1.1.txt --title 'Instalador de Cadeias de Certificados v1.1.0' --notes 'Windows 10/11 64 bits. Instalacao nos repositorios de usuario atual e maquina local, verificacao de duplicidade e confirmacao para novas autoridades raiz. Testado com sucesso em Windows pelo usuario. Executavel sem assinatura digital de editor.' --latest
+          fi
