@@ -2,18 +2,24 @@
 
 Instalador de cadeias de autoridades certificadoras (CA) para Windows 10/11 64 bits.
 
-**Versão:** 1.0.0 (18/11/2026).
+**Versao atual: 1.1.0 (18/11/2026).**
 
-**[Baixar versão mais recente](https://github.com/atendimentopsenedois/instalador-certificados/releases/latest)**
+**[Baixar a versao mais recente](https://github.com/atendimentopsenedois/instalador-certificados/releases/latest)**
 
-O executável oferece interface gráfica, instalação em lote de certificados intermediários e confirmação separada para novas autoridades raiz. Não instala certificados pessoais A1/A3, não modifica configurações de TLS e não executa arquivos `.reg`.
+## Funcionalidades
+- Importacao em lote de cadeias de certificados intermediarios e raizes selecionadas.
+- Instalacao nos repositorios do usuario atual e da maquina local (com autorizacao administrativa quando necessaria).
+- 162 certificados elegiveis incluidos no pacote (certificados vencidos excluidos na preparacao).
+- Verificacao de validade na execucao, deteccao de duplicidades por repositorio e relatorio por destino.
+- Novas autoridades raiz exigem autorizacao explicita.
+- Nao instala certificados pessoais A1/A3, nao modifica TLS, nao executa arquivos .reg e nao requer acesso a Internet.
 
-**Atenção:** o executável ainda não possui assinatura digital de editor e não foi testado em um Windows real. Verifique a origem dos certificados antes de conceder confiança. A importação de uma cadeia não garante autenticidade ou ausência de revogação.
+## Versoes e publicacao automatizada
+- [v1.1.0](https://github.com/atendimentopsenedois/instalador-certificados/releases/tag/v1.1.0): atualizacao para usuario atual + maquina local, testada com sucesso pelo usuario em Windows.
+- [v1.0.0](https://github.com/atendimentopsenedois/instalador-certificados/releases/tag/v1.0.0): primeira versao.
 
-## Distribuição
+A v1.0.0 e reconstruida a partir de `parts/` pelo workflow `.github/workflows/publicar-instalador.yml`. A v1.1.0 utiliza os cinco arquivos de diferencas em `updates/v1.1.0/`, aplica o patch sobre a v1.0.0 validada e confere o SHA-256 final antes de publicar uma nova Release.
 
-As 16 partes codificadas em Base64 da versão 1.0.0 estão em `parts/`. Um fluxo de GitHub Actions remonta o executável original, confere o SHA-256 esperado e o disponibiliza como ativo da Release.
+**SHA-256 v1.1.0:** `8fbb0398e2e841d596e9626c0d8b6cd583dd0f5401b27a47080099e5fc8d006f`.
 
-**SHA-256 esperado:** `B116511539A67EF9619BD03A7EE3B55B51583B4358D2C8071608558FCC6B689B`
-
-Para atualizações futuras, substitua as partes e altere a versão, o SHA-256 e o fluxo de publicação antes de realizar novo release.
+**Seguranca:** o executavel ainda nao possui assinatura digital de editor. Certificados de autoridades raiz so devem receber confianca quando sua procedencia for confirmada. A importacao de uma cadeia nao comprova por si so ausencia de revogacao nem legitimidade do certificado.
